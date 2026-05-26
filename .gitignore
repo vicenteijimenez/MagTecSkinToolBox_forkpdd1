@@ -1,0 +1,10 @@
+# Ignore the massive Singularity container image
+*.sif
+*.sif:Zone.Identifier
+
+# Ignore python cache folders
+__pycache__/
+*.pyc
+
+# Ignore the massive soft robotics generated 3D meshes cache
+Models/SensorFinger/Meshes/Cache/
