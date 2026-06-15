@@ -19,7 +19,7 @@ import numpy as np
 
 class Config(GmshDesignOptimization):
     def __init__(self):
-        super(GmshDesignOptimization,self).__init__("SensorFinger")
+        super(Config, self).__init__("SensorFinger") # Corregido super() para Python moderno
         
     def init_model_parameters(self):
 
@@ -44,6 +44,12 @@ class Config(GmshDesignOptimization):
         self.CavityCorkThickness = 3
         self.PlateauHeight = 3
         
+        # ─────────────────────────────────────────────────────────────────────
+        # NUEVO: Parámetros Paramétricos de la Ranura Superior (Slot)
+        # ─────────────────────────────────────────────────────────────────────
+        self.SlotWidth = 4.0        # Ancho base de la ranura (eje X)
+        self.SlotDepth = 3.5        # Profundidad de la ranura (eje Y)
+
         # Elasticity parameters
         self.PoissonRation = 0.3 #0.47
         self.YoungsModulus = 3000
@@ -71,7 +77,10 @@ class Config(GmshDesignOptimization):
         # Cable
         self.CableRadius = 0.8
         self.CableDistance = 10
-        self.CableHeight = 17.75
+        
+        # SINCRONIZACIÓN DINÁMICA: El cable ahora se apoya exactamente 
+        # en el fondo plano de la ranura superior.
+        self.CableHeight = self.OuterRadius - self.SlotDepth
         
     def get_design_variables(self):            
         return {"Length": [self.Length, 20.0, 60.0], 
@@ -85,7 +94,10 @@ class Config(GmshDesignOptimization):
         "WallThickness": [self.WallThickness, 2.0, 4.0],
         "CenterThickness": [self.CenterThickness, 1.0, 4.0],
         "CavityCorkThickness": [self.CavityCorkThickness, 2.0, 5.0],
-        "PlateauHeight": [self.PlateauHeight, 2.0, 4.0]
+        "PlateauHeight": [self.PlateauHeight, 2.0, 4.0],
+        # Exponemos la ranura al optimizador si se requiere en el futuro:
+        "SlotWidth": [self.SlotWidth, 2.0, 6.0],
+        "SlotDepth": [self.SlotDepth, 1.0, 5.0]
         }
                
     def get_objective_data(self):
@@ -98,7 +110,7 @@ class Config(GmshDesignOptimization):
     def set_design_variables(self, new_values):
         super(Config,self).set_design_variables(new_values)
 
-        # Update mold parameters
+        # Re-actualizar parámetros de moldes y cable tras un cambio del optimizador
         self.MoldWallThickness = 3
         self.MoldCoverTolerance = 0.1
         self.LengthMold = 3*self.Length + 2*self.MoldWallThickness
@@ -113,5 +125,6 @@ class Config(GmshDesignOptimization):
         self.LengthMold = 3*self.Length + 2*self.MoldWallThickness
         self.HeightMold = self.Height + self.FixationWidth + self.MoldWallThickness    
         self.MoldHoleLidBorderThickness = 2
-    
-    
+        
+        # Recalcular la cota del cable para mantenerlo dentro de la ranura en cada iteración
+        self.CableHeight = self.OuterRadius - self.SlotDepth
